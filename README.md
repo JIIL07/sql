@@ -34,7 +34,11 @@ These instructions will get you a copy of the project up and running on your loc
 
 You will need the following installed on your system:
 
+<<<<<<< HEAD
 - Go (version 1.18 or higher)
+=======
+- Go (version 1.14 or higher)
+>>>>>>> d4184f1 (RELEASE version v0.0.1)
 - SQLite3
 
 ### Installation
