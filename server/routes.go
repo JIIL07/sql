@@ -8,23 +8,18 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (app *application) routes(s *ServerContext) *httprouter.Router {
+func (app *application) routes() *httprouter.Router {
 	router := httprouter.New()
 
-	router.Handle(http.MethodPost, "/user", HandlerAdapter(app.UserHandler))
-	router.Handle(http.MethodGet, "/user", HandlerAdapter(app.UserHandler))
-	router.Handle(http.MethodGet, "/", HandlerAdapter(app.TextHandler))
-	router.Handle(http.MethodGet, "/files", HandlerAdapter(app.SetFilesHandler(s)))
-	router.Handle(http.MethodPost, "/addfiles", HandlerAdapter(app.AddFileHandler(s)))
-	router.Handle(http.MethodGet, "/deletedfiles", HandlerAdapter(app.SetDeletedFilesHandler(s)))
+	router.HandlerFunc(http.MethodGet, "/user", app.UserHandler)
+	router.HandlerFunc(http.MethodPost, "/adduser", app.AddUser)
+	router.HandlerFunc(http.MethodDelete, "/deleteuser", app.DeleteUser)
+	router.HandlerFunc(http.MethodGet, "/", app.TextHandler)
+	router.HandlerFunc(http.MethodGet, "/files", app.SetFilesHandler)
+	router.HandlerFunc(http.MethodPost, "/addfiles", app.AddFileHandler)
+	router.HandlerFunc(http.MethodGet, "/deletedfiles", app.SetDeletedFilesHandler)
 
 	return router
-}
-
-func HandlerAdapter(h http.HandlerFunc) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		h(w, r)
-	}
 }
 
 func (app *application) TextHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,42 +35,22 @@ POST /updatefiles
 	app.logger.Printf("Server detected / entering")
 }
 
-func (app *application) SetFilesHandler(s *ServerContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		items, err := s.Ctx.List("files")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+func (app *application) SetFilesHandler(w http.ResponseWriter, r *http.Request) {
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(items)
-	}
 }
 
-func (app *application) SetDeletedFilesHandler(s *ServerContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		items, err := s.Ctx.List("deletedfiles")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+func (app *application) SetDeletedFilesHandler(w http.ResponseWriter, r *http.Request) {
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(items)
-	}
 }
 
-func (app *application) AddFileHandler(s *ServerContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var fileContext cloudfiles.FileContext
-		if err := json.NewDecoder(r.Body).Decode(&fileContext); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			app.errlogger.Printf("error decoding: %v", err)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		app.logger.Printf("Successfully written file")
+func (app *application) AddFileHandler(w http.ResponseWriter, r *http.Request) {
+	var fileContext cloudfiles.FileContext
+	if err := json.NewDecoder(r.Body).Decode(&fileContext); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		app.errlogger.Printf("error decoding: %v", err)
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	app.logger.Printf("Successfully written file")
 }

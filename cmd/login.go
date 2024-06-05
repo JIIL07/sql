@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -24,25 +23,15 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		user, password := cloud.Login()
+		username, password := cloud.Login()
+		password = cloud.HashPassword(password)
 
-		encryptedUsername, err := cloud.Encrypt([]byte(user))
-
-		if err != nil {
-			log.Printf("error encrypting usernames: %v", err)
-		}
-
-		encryptedPassword, err := cloud.Encrypt([]byte(password))
-		if err != nil {
-			log.Printf("error encrypting password: %v", err)
-		}
-
-		viper.Set("username", base64.StdEncoding.EncodeToString(encryptedUsername))
-		viper.Set("password", base64.StdEncoding.EncodeToString(encryptedPassword))
+		viper.Set("username", username)
+		viper.Set("password", password)
 
 		saveConfig()
 
-		err = pushlogin(base64.StdEncoding.EncodeToString(encryptedUsername), base64.StdEncoding.EncodeToString(encryptedPassword))
+		err := pushlogin(username, password)
 		if err != nil {
 			log.Printf("error pushing login: %v", err)
 		}
@@ -64,7 +53,7 @@ func pushlogin(us, ps string) error {
 		return fmt.Errorf("json encoding error: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", "https://cloudfiles.up.railway.app/user", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", URL+"/adduser", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("request error: %v", err)
 	}

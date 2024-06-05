@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +11,7 @@ import (
 )
 
 var ctx *cloud.FileContext
+var URL string = "https://cloudfiles.up.railway.app"
 
 var RootCmd = &cobra.Command{
 	Use:   `cloud`,
@@ -34,7 +34,6 @@ func init() {
 	viper.SetConfigType("json")
 	viper.AddConfigPath(os.Getenv("TEMP"))
 
-	cloud.Generator(32)
 }
 
 func saveConfig() {
@@ -50,26 +49,7 @@ func loadUserPass() {
 		}
 	} else {
 		username := viper.GetString("username")
-		password := viper.GetString("password")
 
-		decodedUsername, err := base64.StdEncoding.DecodeString(username)
-		if err != nil {
-			log.Println("Error decoding username:", err)
-		}
-		decodedPassword, err := base64.StdEncoding.DecodeString(password)
-		if err != nil {
-			log.Println("Error decoding password:", err)
-		}
-
-		userByte, err := cloud.Decrypt(decodedUsername)
-		if err != nil {
-			log.Println("Error decrypting username:", err)
-		}
-		passByte, err := cloud.Decrypt(decodedPassword)
-		if err != nil {
-			log.Println("Error decrypting password:", err)
-		}
-		fmt.Println("Username:", string(userByte))
-		fmt.Println("Password:", string(passByte))
+		fmt.Println("Username:", username)
 	}
 }

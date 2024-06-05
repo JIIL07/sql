@@ -16,8 +16,7 @@ func main() {
 	}
 	defer db.Close()
 
-	servctx := server.NewServerContext(db)
-	if err := servctx.Start(); err != nil {
+	if err := server.Start(); err != nil {
 		log.Fatal(err)
 	}
 
